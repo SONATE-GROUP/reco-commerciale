@@ -51,6 +51,9 @@ body {
 }
 
 @media print {
+  @page {
+    margin: 0;
+  }
   body {
     background: white !important;
   }
@@ -60,5 +63,10 @@ body {
   .print-page {
     box-shadow: none !important;
     border: none !important;
+    border-radius: 0 !important;
+    min-height: 100vh !important;
+  }
+  .print-break {
+    break-before: page;
   }
 }
