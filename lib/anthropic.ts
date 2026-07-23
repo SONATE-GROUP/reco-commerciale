@@ -1,23 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-let client: Anthropic | null = null;
-
-function getClient(): Anthropic {
-  if (!client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "ANTHROPIC_API_KEY manquante. Ajoute-la dans .env.local (voir .env.example)."
-      );
-    }
-    client = new Anthropic({ apiKey });
-  }
-  return client;
-}
-
 /**
  * Appelle Claude et force une réponse structurée via un outil unique,
  * plus fiable que de parser un bloc JSON brut dans le texte de réponse.
+ *
+ * La clé API peut venir soit de la variable d'environnement ANTHROPIC_API_KEY
+ * (déploiement classique), soit être fournie par l'appelant (clé saisie par
+ * l'utilisateur dans la page Réglages de l'outil, transmise à chaque appel).
  */
 export async function generateStructured<T>(opts: {
   model: string;
@@ -25,8 +14,15 @@ export async function generateStructured<T>(opts: {
   user: string;
   schema: Record<string, unknown>;
   maxTokens?: number;
+  apiKey?: string;
 }): Promise<T> {
-  const anthropic = getClient();
+  const apiKey = opts.apiKey || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error(
+      "Aucune clé API Anthropic fournie. Renseigne-la dans la page Réglages de l'outil, ou définis ANTHROPIC_API_KEY sur le serveur."
+    );
+  }
+  const anthropic = new Anthropic({ apiKey });
 
   const response = await anthropic.messages.create({
     model: opts.model,

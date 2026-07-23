@@ -1,12 +1,17 @@
-export async function runPagespeed(url: string, strategy: "mobile" | "desktop") {
+export async function runPagespeed(
+  url: string,
+  strategy: "mobile" | "desktop",
+  apiKey?: string
+) {
   const params = new URLSearchParams();
   params.set("url", url);
   params.set("strategy", strategy);
   params.append("category", "performance");
   params.append("category", "accessibility");
   params.set("locale", "fr");
-  if (process.env.PAGESPEED_API_KEY) {
-    params.set("key", process.env.PAGESPEED_API_KEY);
+  const key = apiKey || process.env.PAGESPEED_API_KEY;
+  if (key) {
+    params.set("key", key);
   }
 
   const res = await fetch(

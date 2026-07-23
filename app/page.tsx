@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import RecoDocument from "@/components/RecoDocument";
+import SettingsPanel, { getStoredKeys } from "@/components/SettingsPanel";
 import type { RecoResult } from "@/lib/types";
 
 export default function Home() {
@@ -9,17 +10,27 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RecoResult | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setResult(null);
+
+    const { anthropicApiKey, pagespeedApiKey } = getStoredKeys();
+    if (!anthropicApiKey) {
+      setError("Renseigne d'abord ta clé API Anthropic dans les Réglages (bouton en haut à droite).");
+      setLoading(false);
+      setShowSettings(true);
+      return;
+    }
+
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, anthropicApiKey, pagespeedApiKey }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -36,14 +47,22 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-sonate-ivory px-4 py-10">
       <div className="mx-auto max-w-3xl">
-        <div className="no-print mb-8 flex items-center gap-3">
-          <img src="/logo/sonate-logo-vert.png" alt="Sonate" className="h-8" />
-          <div>
-            <h1 className="text-xl font-extrabold text-sonate-green">Générateur de reco commerciale</h1>
-            <p className="text-sm text-sonate-ink-muted">
-              Colle un transcript d'appel ou un email de prospect pour générer une proposition.
-            </p>
+        <div className="no-print mb-8 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <img src="/logo/sonate-logo-vert.png" alt="Sonate" className="h-8" />
+            <div>
+              <h1 className="text-xl font-extrabold text-sonate-green">Générateur de reco commerciale</h1>
+              <p className="text-sm text-sonate-ink-muted">
+                Colle un transcript d'appel ou un email de prospect pour générer une proposition.
+              </p>
+            </div>
           </div>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="shrink-0 rounded-full border border-sonate-green px-4 py-2 text-sm font-semibold text-sonate-green transition hover:bg-sonate-green-100"
+          >
+            ⚙ Réglages
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="no-print space-y-4">
@@ -82,6 +101,8 @@ export default function Home() {
 
         {result && <RecoDocument result={result} />}
       </div>
+
+      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
     </main>
   );
 }
