@@ -7,6 +7,7 @@ import type { RecoResult } from "@/lib/types";
 
 export default function Home() {
   const [text, setText] = useState("");
+  const [simulatorLink, setSimulatorLink] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RecoResult | null>(null);
@@ -30,7 +31,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, openrouterApiKey, pagespeedApiKey }),
+        body: JSON.stringify({ text, openrouterApiKey, pagespeedApiKey, simulatorLink }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -73,6 +74,23 @@ export default function Home() {
             className="h-64 w-full rounded-2xl border border-sonate-cream-border bg-sonate-ivory-light p-4 text-sm text-sonate-ink shadow-sonate outline-none focus:border-sonate-green"
             required
           />
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-sonate-ink-muted">
+              Lien du rapport simulateur SEA (optionnel)
+            </label>
+            <input
+              type="url"
+              value={simulatorLink}
+              onChange={(e) => setSimulatorLink(e.target.value)}
+              placeholder="https://simulateur-sea.vercel.app/?s=...&t=..."
+              className="w-full rounded-xl border border-sonate-cream-border bg-sonate-ivory-light p-3 text-sm text-sonate-ink shadow-sonate outline-none focus:border-sonate-green"
+            />
+            <p className="mt-1 text-xs text-sonate-ink-muted">
+              Colle le lien généré par le bouton "Enregistrer" du simulateur pour reprendre ses chiffres exacts (budget, leads, ROAS) dans la reco SEA plutôt que de laisser l'IA les estimer.
+            </p>
+          </div>
+
           <div className="flex items-center gap-3">
             <button
               type="submit"

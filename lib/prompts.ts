@@ -14,12 +14,16 @@ const EXPERTISE_SCHEMA = {
   required: ["nom", "strategie", "objectifs", "leads_estimes", "appels_estimes"],
 };
 
-export function recoCorePrompt(inputText: string) {
+export function recoCorePrompt(inputText: string, simulatorContext?: string) {
   const system =
     "Tu es le Directeur de Stratégie d'une agence de marketing digital reconnue. " +
     "Ton rôle est d'analyser les demandes entrantes pour préparer une recommandation " +
     "(reco) sur-mesure. Tu as une vision 360° : acquisition, conversion et fidélisation. " +
     "Ton ton est professionnel, expert, rassurant et synthétique.";
+
+  const simulatorBlock = simulatorContext
+    ? `\n\nDONNÉES CHIFFRÉES RÉELLES ISSUES DU SIMULATEUR SEA (à utiliser TELLES QUELLES pour l'expertise correspondante, ne les remplace ni ne les invente autrement — décris-les et intègre-les dans la stratégie et les objectifs) :\n${simulatorContext}`
+    : "";
 
   const user = `Tu es le Directeur Stratégie d'une agence de marketing digital. Analyse la demande entrante ci-dessous (transcript d'appel ou email d'un prospect) et prépare les variables d'une proposition commerciale.
 
@@ -31,14 +35,14 @@ INSTRUCTIONS STRICTES :
 5. Les titres doivent contenir MAXIMUM 7 mots.
 6. Le nom de chaque expertise doit contenir uniquement le nom du canal (ex : SEA, SEO, SMA...), pas de texte superflu.
 7. ORTHOGRAPHE FRANÇAISE : conserve tous les accents (é, è, à, ê, ç, etc.).
-8. Pour les estimations de leads et d'appels entrants, donne des fourchettes réalistes et adaptées au secteur d'activité du prospect. Si l'expertise ne génère pas directement des leads/appels (ex: SEO en phase initiale), indique une estimation honnête ou "En montée en puissance".
+8. Pour les estimations de leads et d'appels entrants, donne des fourchettes réalistes et adaptées au secteur d'activité du prospect. Si l'expertise ne génère pas directement des leads/appels (ex: SEO en phase initiale), indique une estimation honnête ou "En montée en puissance". Si des données chiffrées réelles du simulateur SEA sont fournies ci-dessous, utilise-les à la place d'une estimation pour l'expertise SEA/Google Ads.
 9. Le champ url_site doit contenir l'URL du site web si elle est mentionnée dans le texte, sinon "À définir".
 10. projections_kpis_detail : génère 3 à 4 projections chiffrées strictement adaptées aux expertises demandées (SEA → CPC/volumes/CPL, SEO → trafic organique/mots-clés/délai ROI, Outreach → taux d'ouverture/coût par contact/taux de réponse, Dev/Web → temps de chargement/taux de conversion/délai de livraison). Format : tirets courts "- ".
 
 CONTENU DE LA DEMANDE DU PROSPECT (transcript d'appel ou email) :
 """
 ${inputText}
-"""`;
+"""${simulatorBlock}`;
 
   const schema = {
     expertises_concernees: { type: "string", description: "Ex: SEA & SEO, ou Prospection Automatisée" },

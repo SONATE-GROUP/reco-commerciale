@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateStructured } from "@/lib/openrouter";
 import { recoCorePrompt, lpAuditPrompt, competitorsPrompt } from "@/lib/prompts";
 import { runPagespeed, extractPagespeedSummary } from "@/lib/pagespeed";
+import { parseSimulatorLink, type SimulatorResult } from "@/lib/simulator";
 import type { RecoResult, RecoCore, ExpertiseBlock, LpAudit, CompetitorAnalysis } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -22,8 +23,46 @@ function normalizeUrl(value: string): string {
   return value.startsWith("http") ? value : `https://${value}`;
 }
 
+function matchesChannel(nom: string, channelLabel: string): boolean {
+  const n = nom.toLowerCase();
+  if (channelLabel === "Google Ads") return /sea|google ads/.test(n);
+  if (channelLabel === "Meta Ads") return /sma|social ads|meta ads|facebook/.test(n);
+  if (channelLabel === "LinkedIn Ads") return /linkedin/.test(n);
+  if (channelLabel === "TikTok Ads") return /tiktok/.test(n);
+  return false;
+}
+
+function buildSimulatorContext(sim: SimulatorResult): string {
+  const lines = [
+    `- Canal : ${sim.channelLabel}`,
+    `- Secteur : ${sim.sectorLabel}`,
+    `- Budget mensuel simulé : ${sim.monthly.spend} €`,
+    `- ${sim.businessTypeLabel} générés par mois : ${sim.monthly.leads}`,
+    sim.monthly.clients !== sim.monthly.leads ? `- Clients estimés par mois (après closing) : ${sim.monthly.clients}` : null,
+    `- Coût par ${sim.businessTypeLabel.toLowerCase().replace(/s$/, "")} : ${sim.monthly.cpl} €`,
+    `- ROAS : x${sim.monthly.roas} (ROI net ${sim.monthly.roiPct}%)`,
+    `- Projection annuelle : ${sim.annual.leads} ${sim.businessTypeLabel.toLowerCase()}, ${sim.annual.ca} € de CA généré, ROAS annuel x${sim.annual.roas}`,
+    sim.lowSignal ? `- Signal faible : volume mensuel sous le seuil d'optimisation algorithmique, à mentionner comme point de vigilance.` : null,
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
+function applySimulatorToExpertise(expertises: ExpertiseBlock[], sim: SimulatorResult): boolean {
+  const target = expertises.find((e) => matchesChannel(e.nom, sim.channelLabel));
+  if (!target) return false;
+
+  const volumeLabel = `${sim.monthly.leads} ${sim.businessTypeLabel.toLowerCase()}/mois (≈ ${sim.annual.leads}/an) — CPL ${sim.monthly.cpl} €, ROAS x${sim.monthly.roas}`;
+  if (/appel/i.test(sim.businessTypeLabel)) {
+    target.appels_estimes = volumeLabel;
+  } else {
+    target.leads_estimes = volumeLabel;
+  }
+  target.strategie = `${target.strategie}\n- Budget mensuel simulé : ${sim.monthly.spend} € pour un ROAS de x${sim.monthly.roas} (ROI net ${sim.monthly.roiPct}%)`;
+  return true;
+}
+
 export async function POST(req: NextRequest) {
-  let body: { text?: string; openrouterApiKey?: string; pagespeedApiKey?: string };
+  let body: { text?: string; openrouterApiKey?: string; pagespeedApiKey?: string; simulatorLink?: string };
   try {
     body = await req.json();
   } catch {
@@ -47,10 +86,25 @@ export async function POST(req: NextRequest) {
   const modelAudit = process.env.OPENROUTER_MODEL_AUDIT || "anthropic/claude-sonnet-4.6";
   const modelCompetitors = process.env.OPENROUTER_MODEL_COMPETITORS || "anthropic/claude-opus-4.6";
 
+  // 0. Décodage du lien du simulateur SEA/SMA (optionnel) — les chiffres qu'il
+  // contient sont exacts et priment sur toute estimation générée par l'IA.
+  let simulatorData: SimulatorResult | null = null;
+  const simulatorLink = body.simulatorLink?.trim();
+  if (simulatorLink) {
+    try {
+      simulatorData = parseSimulatorLink(simulatorLink);
+    } catch (err: any) {
+      warnings.push(`Lien du simulateur ignoré : ${err.message}`);
+    }
+  }
+
   // 1. Génération du coeur de la reco (variables commerciales)
   let rawCore: any;
   try {
-    const { system, user, schema } = recoCorePrompt(inputText);
+    const { system, user, schema } = recoCorePrompt(
+      inputText,
+      simulatorData ? buildSimulatorContext(simulatorData) : undefined
+    );
     rawCore = await generateStructured({ model: modelReco, system, user, schema, maxTokens: 8000, apiKey: openrouterApiKey });
   } catch (err: any) {
     return NextResponse.json(
@@ -62,6 +116,15 @@ export async function POST(req: NextRequest) {
   const expertises: ExpertiseBlock[] = [1, 2, 3, 4]
     .map((i) => rawCore[`expertise_${i}`] as ExpertiseBlock | undefined)
     .filter((e): e is ExpertiseBlock => !!e && !!e.nom && e.nom.trim().length > 0);
+
+  if (simulatorData) {
+    const applied = applySimulatorToExpertise(expertises, simulatorData);
+    if (!applied) {
+      warnings.push(
+        `Les données du simulateur (${simulatorData.channelLabel}) n'ont pas pu être rattachées à une expertise générée — vérifie que la demande du prospect mentionne bien ce canal.`
+      );
+    }
+  }
 
   const core: RecoCore = {
     expertises_concernees: rawCore.expertises_concernees ?? "",
