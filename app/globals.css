@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 300;
+  src: url("/fonts/manrope-latin-300-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400;
+  src: url("/fonts/manrope-latin-400-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 500;
+  src: url("/fonts/manrope-latin-500-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 600;
+  src: url("/fonts/manrope-latin-600-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 700;
+  src: url("/fonts/manrope-latin-700-normal.woff2") format("woff2");
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 800;
+  src: url("/fonts/manrope-latin-800-normal.woff2") format("woff2");
+  font-display: swap;
+}
+
+body {
+  background-color: #f6f1e8;
+  color: #1f2421;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-page {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
