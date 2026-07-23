@@ -1,5 +1,5 @@
 // Prompts repris et adaptés du scénario Make d'origine
-// ("Génération proposition commerciale"), portés vers l'API Anthropic
+// ("Génération proposition commerciale"), portés vers OpenRouter
 // avec sortie structurée forcée (tool use) au lieu du mode JSON texte.
 
 const EXPERTISE_SCHEMA = {

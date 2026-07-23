@@ -18,9 +18,9 @@ export default function Home() {
     setError(null);
     setResult(null);
 
-    const { anthropicApiKey, pagespeedApiKey } = getStoredKeys();
-    if (!anthropicApiKey) {
-      setError("Renseigne d'abord ta clé API Anthropic dans les Réglages (bouton en haut à droite).");
+    const { openrouterApiKey, pagespeedApiKey } = getStoredKeys();
+    if (!openrouterApiKey) {
+      setError("Renseigne d'abord ta clé API OpenRouter dans les Réglages (bouton en haut à droite).");
       setLoading(false);
       setShowSettings(true);
       return;
@@ -30,7 +30,7 @@ export default function Home() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, anthropicApiKey, pagespeedApiKey }),
+        body: JSON.stringify({ text, openrouterApiKey, pagespeedApiKey }),
       });
       const data = await res.json();
       if (!res.ok) {

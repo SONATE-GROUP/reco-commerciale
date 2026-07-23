@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateStructured } from "@/lib/anthropic";
+import { generateStructured } from "@/lib/openrouter";
 import { recoCorePrompt, lpAuditPrompt, competitorsPrompt } from "@/lib/prompts";
 import { runPagespeed, extractPagespeedSummary } from "@/lib/pagespeed";
 import type { RecoResult, RecoCore, ExpertiseBlock, LpAudit, CompetitorAnalysis } from "@/lib/types";
@@ -23,7 +23,7 @@ function normalizeUrl(value: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  let body: { text?: string; anthropicApiKey?: string; pagespeedApiKey?: string };
+  let body: { text?: string; openrouterApiKey?: string; pagespeedApiKey?: string };
   try {
     body = await req.json();
   } catch {
@@ -39,19 +39,19 @@ export async function POST(req: NextRequest) {
   }
 
   // Clé saisie dans la page Réglages (prioritaire) sinon variable d'environnement du serveur
-  const anthropicApiKey = body.anthropicApiKey?.trim() || undefined;
+  const openrouterApiKey = body.openrouterApiKey?.trim() || undefined;
   const pagespeedApiKey = body.pagespeedApiKey?.trim() || undefined;
 
   const warnings: string[] = [];
-  const modelReco = process.env.ANTHROPIC_MODEL_RECO || "claude-opus-4-8";
-  const modelAudit = process.env.ANTHROPIC_MODEL_AUDIT || "claude-sonnet-5";
-  const modelCompetitors = process.env.ANTHROPIC_MODEL_COMPETITORS || "claude-opus-4-8";
+  const modelReco = process.env.OPENROUTER_MODEL_RECO || "anthropic/claude-opus-4.6";
+  const modelAudit = process.env.OPENROUTER_MODEL_AUDIT || "anthropic/claude-sonnet-4.6";
+  const modelCompetitors = process.env.OPENROUTER_MODEL_COMPETITORS || "anthropic/claude-opus-4.6";
 
   // 1. Génération du coeur de la reco (variables commerciales)
   let rawCore: any;
   try {
     const { system, user, schema } = recoCorePrompt(inputText);
-    rawCore = await generateStructured({ model: modelReco, system, user, schema, maxTokens: 8000, apiKey: anthropicApiKey });
+    rawCore = await generateStructured({ model: modelReco, system, user, schema, maxTokens: 8000, apiKey: openrouterApiKey });
   } catch (err: any) {
     return NextResponse.json(
       { error: `Échec de la génération de la reco : ${err.message}` },
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
         mobile,
         desktop,
       });
-      lpAudit = await generateStructured<LpAudit>({ model: modelAudit, system, user, schema, maxTokens: 2000, apiKey: anthropicApiKey });
+      lpAudit = await generateStructured<LpAudit>({ model: modelAudit, system, user, schema, maxTokens: 2000, apiKey: openrouterApiKey });
     } catch (err: any) {
       warnings.push(`Audit de la landing page indisponible : ${err.message}`);
     }
@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
         personae: core.ciblage_personae,
         canaux: core.canaux_actives,
       });
-      const raw = await generateStructured<any>({ model: modelCompetitors, system, user, schema, maxTokens: 2000, apiKey: anthropicApiKey });
+      const raw = await generateStructured<any>({ model: modelCompetitors, system, user, schema, maxTokens: 2000, apiKey: openrouterApiKey });
       competitors = {
         concurrents: [raw.concurrent_1, raw.concurrent_2, raw.concurrent_3].filter(Boolean),
         intensite_concurrence: raw.intensite_concurrence ?? "",

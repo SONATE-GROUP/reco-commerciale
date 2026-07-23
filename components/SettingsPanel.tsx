@@ -2,30 +2,30 @@
 
 import { useEffect, useState } from "react";
 
-export const ANTHROPIC_KEY_STORAGE = "reco_anthropic_api_key";
+export const OPENROUTER_KEY_STORAGE = "reco_openrouter_api_key";
 export const PAGESPEED_KEY_STORAGE = "reco_pagespeed_api_key";
 
 export function getStoredKeys() {
-  if (typeof window === "undefined") return { anthropicApiKey: "", pagespeedApiKey: "" };
+  if (typeof window === "undefined") return { openrouterApiKey: "", pagespeedApiKey: "" };
   return {
-    anthropicApiKey: window.localStorage.getItem(ANTHROPIC_KEY_STORAGE) || "",
+    openrouterApiKey: window.localStorage.getItem(OPENROUTER_KEY_STORAGE) || "",
     pagespeedApiKey: window.localStorage.getItem(PAGESPEED_KEY_STORAGE) || "",
   };
 }
 
 export default function SettingsPanel({ onClose }: { onClose: () => void }) {
-  const [anthropicApiKey, setAnthropicApiKey] = useState("");
+  const [openrouterApiKey, setOpenrouterApiKey] = useState("");
   const [pagespeedApiKey, setPagespeedApiKey] = useState("");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     const stored = getStoredKeys();
-    setAnthropicApiKey(stored.anthropicApiKey);
+    setOpenrouterApiKey(stored.openrouterApiKey);
     setPagespeedApiKey(stored.pagespeedApiKey);
   }, []);
 
   function handleSave() {
-    window.localStorage.setItem(ANTHROPIC_KEY_STORAGE, anthropicApiKey.trim());
+    window.localStorage.setItem(OPENROUTER_KEY_STORAGE, openrouterApiKey.trim());
     window.localStorage.setItem(PAGESPEED_KEY_STORAGE, pagespeedApiKey.trim());
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -46,30 +46,30 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <p className="mb-4 text-sm text-sonate-ink-muted">
-          Ces clés restent uniquement dans ton navigateur (jamais envoyées ailleurs qu'à Anthropic /
+          Ces clés restent uniquement dans ton navigateur (jamais envoyées ailleurs qu'à OpenRouter /
           Google pour générer la reco). Si tu changes d'ordinateur ou de navigateur, il faudra les
           resaisir.
         </p>
 
         <label className="mb-1 block text-xs font-semibold uppercase text-sonate-ink-muted">
-          Clé API Anthropic (obligatoire)
+          Clé API OpenRouter (obligatoire)
         </label>
         <input
           type="password"
-          value={anthropicApiKey}
-          onChange={(e) => setAnthropicApiKey(e.target.value)}
-          placeholder="sk-ant-..."
+          value={openrouterApiKey}
+          onChange={(e) => setOpenrouterApiKey(e.target.value)}
+          placeholder="sk-or-..."
           className="mb-1 w-full rounded-xl border border-sonate-cream-border bg-white p-2.5 text-sm outline-none focus:border-sonate-green"
         />
         <p className="mb-4 text-xs text-sonate-ink-muted">
           À récupérer sur{" "}
           <a
-            href="https://console.anthropic.com/settings/keys"
+            href="https://openrouter.ai/settings/keys"
             target="_blank"
             rel="noreferrer"
             className="text-sonate-orange hover:underline"
           >
-            console.anthropic.com/settings/keys
+            openrouter.ai/settings/keys
           </a>
           .
         </p>
