@@ -38,7 +38,8 @@ Cette clé reste stockée uniquement dans ton navigateur (jamais dans le code, j
 1. **Génération de la reco** : à partir du texte collé, un modèle Claude (via OpenRouter) extrait les variables commerciales (expertises demandées, ciblage, stratégie par canal, KPIs, projections...) — équivalent du module `open-router:createAChatCompletion` (id 3) du scénario Make d'origine.
 2. **Audit de la landing page** (si une URL est détectée) : appel à l'API Google PageSpeed Insights (mobile + desktop) puis analyse par IA pour produire des notes lisibles — équivalent des modules PageSpeed + LLM (id 19/22/21/23).
 3. **Analyse concurrentielle** (déclenchée quand une expertise Ads — SEA/SMA/Social Ads/Google Ads — est demandée) : le modèle identifie 3 concurrents probables et évalue l'intensité concurrentielle — équivalent du module id 10 du scénario Make.
-4. **Rendu final** : une page HTML soignée aux couleurs Sonate (vert sapin / orange / ivoire, police Manrope), exportable en PDF via le bouton "Exporter en PDF" (impression navigateur).
+4. **Reprise des chiffres du simulateur SEA** (optionnel) : si un lien de rapport [simulateur-commercial-sea](https://github.com/SONATE-GROUP/simulateur-commercial-sea) est collé, ses paramètres sont décodés directement depuis l'URL partagée (`?s=...`, aucun appel réseau au simulateur) et les mêmes formules de calcul sont rejouées (`lib/simulator.ts`) pour obtenir budget, leads, CPL, ROAS et ROI exacts. Ces chiffres remplacent l'estimation IA sur l'expertise Ads correspondante au lieu d'être devinés par le modèle. Si les formules du simulateur évoluent, penser à reporter les changements dans `lib/simulator.ts`.
+5. **Rendu final** : une page HTML soignée aux couleurs Sonate (vert sapin / orange / ivoire, police Manrope), calée sur les tokens visuels du simulateur SEA, exportable en PDF via le bouton "Exporter en PDF" (impression navigateur).
 
 ## Différences volontaires avec le scénario Make d'origine
 
